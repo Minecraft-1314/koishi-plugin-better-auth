@@ -1,0 +1,68 @@
+{
+  "name": "koishi-plugin-better-auth",
+  "description": "基于 `@koishijs/plugin-auth` ，新增批量会话管理、登录限流、登录提醒等功能，适用于公网部署的 Koishi 控制台",
+  "version": "0.0.7",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "lint": "eslint src --ext .ts",
+    "build:backend": "tsc && node -e \"require('fs').cpSync('src/locales','lib/locales',{recursive:true})\"",
+    "build:client": "vite build",
+    "build": "npm run build:backend && npm run build:client",
+    "dev:backend": "tsc -w",
+    "dev:client": "vite build --watch",
+    "clean": "rimraf lib dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Minecraft-1314/koishi-plugin-better-auth"
+  },
+  "bugs": {
+    "url": "https://github.com/Minecraft-1314/koishi-plugin-better-auth/issues"
+  },
+  "homepage": "https://github.com/Minecraft-1314/koishi-plugin-better-auth",
+  "keywords": [
+    "bot",
+    "chatbot",
+    "koishi",
+    "plugin",
+    "authentication",
+    "login",
+    "console"
+  ],
+  "koishi": {
+    "public": [
+      "dist"
+    ],
+    "description": {
+      "zh": "更好的@koishijs/plugin-auth"
+    },
+    "service": {
+      "required": [
+        "database",
+        "console"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@koishijs/plugin-console": "^5.30.11",
+    "koishi": "^4.18.11"
+  },
+  "devDependencies": {
+    "@koishijs/client": "^5.30.11",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "js-yaml": "^4.3.1",
+    "rimraf": "^5.0.7",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.21",
+    "vue": "^3.5.13"
+  },
+  "dependencies": {
+    "@koishijs/console": "^5.30.11"
+  }
+}
