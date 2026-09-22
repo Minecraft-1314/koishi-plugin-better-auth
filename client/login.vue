@@ -29,7 +29,7 @@ import LoginForm from './login-form.vue'
 
 <style lang="scss" scoped>
 .login-page {
-  --ba-accent: color-mix(in srgb, var(--k-color-primary, #409eff) 50%, #8c6bff);
+  --ba-accent: color-mix(in srgb, var(--k-color-primary, #409eff) 65%, white);
   position: fixed;
   inset: 0;
   display: flex;
@@ -100,17 +100,17 @@ import LoginForm from './login-form.vue'
 .login-card {
   width: 100%;
   border-radius: 20px;
-  background: color-mix(in srgb, var(--k-card-bg, #fff) 80%, transparent);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  background: var(--k-card-bg, #fff);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--k-page-bg, #000) 15%, transparent), 0 2px 8px color-mix(in srgb, var(--k-page-bg, #000) 6%, transparent);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid color-mix(in srgb, var(--k-color-border, #e4e7ed) 50%, transparent);
+  border: 1px solid var(--k-color-border, #e4e7ed);
   overflow: hidden;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .login-card:hover {
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 28px 80px color-mix(in srgb, var(--k-page-bg, #000) 20%, transparent), 0 4px 12px color-mix(in srgb, var(--k-page-bg, #000) 9%, transparent);
 }
 
 .login-card :deep(.k-card-body) {

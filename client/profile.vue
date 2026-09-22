@@ -258,7 +258,7 @@ const menu = computed(() => [{
 
 <style lang="scss" scoped>
 .page-profile {
-  --ba-accent: color-mix(in srgb, var(--k-color-primary, #409eff) 50%, #8c6bff);
+  --ba-accent: color-mix(in srgb, var(--k-color-primary, #409eff) 65%, white);
 
   h1 {
     font-size: 1.375rem;
@@ -333,7 +333,7 @@ const menu = computed(() => [{
     border-radius: 16px;
     background: var(--k-card-bg, #fff);
     border: 1px solid var(--k-color-border, #e4e7ed);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--k-page-bg, #000) 6%, transparent);
     animation: header-enter 0.45s ease 0.08s both;
   }
 
@@ -373,7 +373,7 @@ const menu = computed(() => [{
     background: var(--k-hover-bg, #f5f7fa);
     border-radius: 12px;
     padding: 0.9rem 1rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--k-page-bg, #000) 5%, transparent);
     display: flex;
     align-items: flex-start;
     gap: 0.85rem;
@@ -383,7 +383,7 @@ const menu = computed(() => [{
 
   .token-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--k-page-bg, #000) 12%, transparent);
     border-color: color-mix(in srgb, var(--k-color-primary, #409eff) 35%, transparent);
   }
 

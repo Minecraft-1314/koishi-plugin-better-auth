@@ -189,7 +189,7 @@ onMounted(() => {
 
   .btn-primary {
     color: #fff;
-    background: linear-gradient(135deg, var(--k-color-primary, #409eff), var(--ba-accent, #8c6bff));
+background: linear-gradient(135deg, var(--k-color-primary, #409eff), var(--ba-accent, color-mix(in srgb, var(--k-color-primary, #409eff) 65%, white)));
     box-shadow: 0 8px 24px color-mix(in srgb, var(--k-color-primary, #409eff) 35%, transparent);
 
     &:hover:not(:disabled) {

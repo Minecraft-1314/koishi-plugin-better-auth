@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-better-auth",
   "description": "基于 `@koishijs/plugin-auth` ，新增批量会话管理、登录限流、登录提醒等功能，适用于公网部署的 Koishi 控制台",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

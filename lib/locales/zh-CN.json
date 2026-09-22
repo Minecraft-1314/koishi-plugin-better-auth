@@ -19,3 +19,55 @@
     "robotId": "指定机器人账号"
   }
 }
+{
+  "admin": {
+    "$description": "管理员设置",
+    "enabled": "启用管理员账号创建",
+    "username": "管理员用户名",
+    "password": "管理员密码"
+  },
+  "security": {
+    "$description": "安全设置",
+    "maxLoginAttempts": "最大登录尝试次数，超出后将锁定账号",
+    "lockTime": "登录锁定时间（秒），锁定期间拒绝登录请求",
+    "idleTimeout": "空闲超时时间（秒），0 表示不限制，超时后自动退出登录",
+    "passwordMinLength": "密码最小长度",
+    "passwordRequireSpecialChar": "密码必须包含特殊字符",
+    "passwordHashAlgorithm": "密码哈希算法"
+  },
+  "token": {
+    "$description": "令牌设置",
+    "authExpire": "用户令牌有效期（秒）",
+    "refreshExpire": "刷新令牌有效期（秒）",
+    "rememberExpire": "记住我令牌有效期（秒）",
+    "maxTokensPerUser": "每个用户最大令牌数，超出后自动移除最早的令牌",
+    "revokeOnPasswordChange": "修改密码时撤销所有令牌，强制重新登录"
+  },
+  "cleanup": {
+    "$description": "数据清理",
+    "enabled": "启用自动数据清理",
+    "interval": "清理间隔（秒）",
+    "tokenRetention": "令牌保留时间（秒）",
+    "refreshTokenRetention": "刷新令牌保留时间（秒）",
+    "attemptRetention": "登录尝试记录保留时间（秒）"
+  },
+  "notification": {
+    "$description": "登录提醒",
+    "enabled": "启用登录提醒",
+    "target": "目标群号",
+    "robotId": "指定机器人账号（留空使用第一个）",
+    "loginSuccess": "登录成功时发送提醒",
+    "loginFail": "登录失败时发送提醒",
+    "loginNotifyMessage": "登录成功提醒模板（留空使用默认）",
+    "failNotifyMessage": "登录失败提醒模板（留空使用默认）"
+  },
+  "debug": {
+    "$description": "调试设置",
+    "enabled": "启用调试日志（仅输出到后端日志，不影响前端）",
+    "logTokenOps": "记录令牌操作日志",
+    "logLoginAttempts": "记录登录尝试日志",
+    "logNotifications": "记录通知发送日志",
+    "logCleanup": "记录数据清理日志",
+    "logExtensions": "记录扩展钩子日志"
+  }
+}

@@ -3,6 +3,7 @@ import { watch } from 'vue'
 import { shared } from './utils'
 import Login from './login.vue'
 import Profile from './profile.vue'
+import ConfigPage from './config-page.vue'
 import Check from './icons/check.vue'
 import Clock from './icons/clock.vue'
 import Desktop from './icons/desktop.vue'
@@ -92,6 +93,13 @@ export default (ctx: Context) => {
     position: 'bottom',
     order: 500,
     component: Profile,
+  })
+
+  ctx.settings({
+    id: 'better-auth',
+    title: 'Better Auth',
+    order: 900,
+    component: ConfigPage,
   })
 
   watch(() => store.user, (value) => {

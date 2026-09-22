@@ -14,6 +14,7 @@ declare module '@koishijs/plugin-console' {
     'user/update'(this: Client, data: any): void
     'user/logout'(this: Client): void
     'user/heartbeat'(this: Client): void
+    'config/better-auth/update'(this: Client, data: any): void
   }
 
   namespace Console {
@@ -36,7 +37,6 @@ export const shared = useStorage<SharedConfig>('auth', 3, () => ({}))
 
 export const loginPassword = ref('')
 
-export const showLoginDialog = ref(false)
 
 export function getDeviceFingerprint(): string {
   const canvas = document.createElement('canvas')
