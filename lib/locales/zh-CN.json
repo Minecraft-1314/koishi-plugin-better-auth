@@ -5,27 +5,6 @@
     "username": "管理员用户名",
     "password": "管理员密码"
   },
-  "authTokenExpire": "用户令牌有效期（秒）",
-  "refreshTokenExpire": "刷新令牌有效期（秒）",
-  "rememberTokenExpire": "记住我令牌有效期（秒）",
-  "idleTimeout": "空闲超时时间（秒）",
-  "maxLoginAttempts": "最大登录尝试次数",
-  "loginLockTime": "登录锁定时间（秒）",
-  "loginNotify": {
-    "$description": "登录提醒",
-    "enabled": "启用登录提醒",
-    "type": "提醒方式",
-    "target": "目标 QQ 群号",
-    "robotId": "指定机器人账号"
-  }
-}
-{
-  "admin": {
-    "$description": "管理员设置",
-    "enabled": "启用管理员账号创建",
-    "username": "管理员用户名",
-    "password": "管理员密码"
-  },
   "security": {
     "$description": "安全设置",
     "maxLoginAttempts": "最大登录尝试次数，超出后将锁定账号",
