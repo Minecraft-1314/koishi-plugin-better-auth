@@ -14,10 +14,6 @@ export class TokenManager {
     private extensions: ExtensionManager,
   ) {}
 
-  update(newConfig: TokenManagerConfig) {
-    this.config = newConfig
-  }
-
   async create(
     client: Client,
     type: LoginType,
@@ -97,20 +93,22 @@ export class TokenManager {
     }
   }
 
-  async revokeAll(userId: number) {
+  async revokeAll(userId: number, exceptToken?: string) {
     const tokens = await this.ctx.database.get('token', { id: userId })
     for (const t of tokens) {
+      if (exceptToken && t.token === exceptToken) continue
       if (t.refreshToken) {
         await this.ctx.database.set('refresh_token', { token: t.refreshToken }, { revoked: true })
       }
+      await this.ctx.database.remove('token', { inc: t.inc })
+      await this.extensions.emitTokenRevoked({ userId, token: t.token })
     }
-    await this.ctx.database.remove('token', { id: userId })
-    this.debug.token(`撤销用户所有令牌: userId=${userId}`)
+    this.debug.token(`撤销用户令牌: userId=${userId}${exceptToken ? '（保留当前会话）' : ''}`)
   }
 
-  async revokeOne(inc: number) {
+  async revokeOne(inc: number, userId?: number) {
     const [data] = await this.ctx.database.get('token', { inc })
-    if (!data) return null
+    if (!data || (userId !== undefined && data.id !== userId)) return null
     await this.ctx.database.remove('token', { inc })
     if (data.refreshToken) {
       await this.ctx.database.set('refresh_token', { token: data.refreshToken }, { revoked: true })
@@ -120,16 +118,21 @@ export class TokenManager {
     return data
   }
 
-  async revokeBatch(incs: number[]) {
-    const rows = await this.ctx.database.get('token', { inc: { $in: incs } })
-    await this.ctx.database.remove('token', { inc: { $in: incs } })
+  async revokeBatch(incs: number[], userId?: number) {
+    const uniqueIncs = [...new Set(incs)]
+    const query: Record<string, any> = { inc: { $in: uniqueIncs } }
+    if (userId !== undefined) query.id = userId
+    const rows = await this.ctx.database.get('token', query)
+    if (userId !== undefined && rows.length !== uniqueIncs.length) return null
+    await this.ctx.database.remove('token', { inc: { $in: uniqueIncs } })
     for (const row of rows) {
       if (row.refreshToken) {
         await this.ctx.database.set('refresh_token', { token: row.refreshToken }, { revoked: true })
       }
       await this.extensions.emitTokenRevoked({ userId: row.id, token: row.token })
     }
-    this.debug.token(`批量撤销令牌: ${incs.length}个`)
+    this.debug.token(`批量撤销令牌: ${rows.length}个`)
+    return rows
   }
 
   async updateLastUsed(token: string) {

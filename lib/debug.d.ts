@@ -16,5 +16,4 @@ export declare class DebugLogger {
     notify(message: string, ...args: any[]): void;
     cleanup(message: string, ...args: any[]): void;
     extension(message: string, ...args: any[]): void;
-    update(newConfig: DebugConfig): void;
 }

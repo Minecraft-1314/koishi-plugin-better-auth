@@ -1,4 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'crypto'
+import { SecurityConfig } from './config'
+
+const SPECIAL_CHAR = /[!-/:-@[-`{-~]/
+const DEFAULT_MIN_LENGTH = 6
 
 export function randomId(length = 40) {
   const bytes = Math.ceil(length * 3 / 4)
@@ -24,4 +28,15 @@ export function verifyPassword(plain: string, hashed: string) {
     ? createHash('sha256').update(hashed.slice(0, index) + plain).digest('hex')
     : createHash('sha256').update(plain).digest('hex')
   return safeEqual(digest, index >= 0 ? hashed.slice(index + 1) : hashed)
+}
+
+export function checkPasswordPolicy(password: string, config: SecurityConfig = {}) {
+  const minLength = config.passwordMinLength ?? DEFAULT_MIN_LENGTH
+  if (password.length < minLength) return `密码长度不能少于 ${minLength} 位`
+  if (config.passwordRequireSpecialChar && !SPECIAL_CHAR.test(password)) return '密码必须包含特殊字符'
+  return null
+}
+
+export function fingerprint(value: string) {
+  return createHash('sha256').update(`better-auth:${value}`).digest('hex')
 }

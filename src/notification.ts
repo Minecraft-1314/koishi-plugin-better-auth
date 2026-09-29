@@ -18,10 +18,6 @@ export class LoginNotification {
     private debug: DebugLogger,
   ) {}
 
-  update(newConfig: NotificationConfig) {
-    this.config = newConfig
-  }
-
   async send(message: string) {
     if (!this.config.enabled || !this.config.target) return
     const target = this.config.target.trim()

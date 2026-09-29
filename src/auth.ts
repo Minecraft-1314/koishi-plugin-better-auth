@@ -1,8 +1,7 @@
 import { Context, Schema, Service } from 'koishi'
 import { Client } from '@koishijs/console'
 import { PluginConfig, PluginSchema } from './config'
-import { migrateLegacyConfig } from './config'
-import { hashPassword } from './password'
+import { checkPasswordPolicy, fingerprint, hashPassword } from './password'
 import { TokenManager } from './token'
 import { LoginHandler } from './login'
 import { CleanupService } from './cleanup'
@@ -11,6 +10,10 @@ import { DebugLogger } from './debug'
 import { ExtensionManager } from './extension'
 import { Auth } from './types'
 import { resolve } from 'path'
+
+const ADMIN_USER_ID = 0
+const ADMIN_AUTHORITY = 5
+const ADMIN_PASSWORD_STATE = 'admin-password'
 
 class AuthService extends Service {
   static inject = ['console', 'database']
@@ -26,15 +29,14 @@ class AuthService extends Service {
 
   constructor(ctx: Context, public config: PluginConfig) {
     super(ctx, 'auth')
-    this.config = migrateLegacyConfig(config) as PluginConfig
 
-    this.debug = new DebugLogger(config.debug ?? {})
+    this.debug = new DebugLogger(config.debug)
     this.extensions = new ExtensionManager(this.debug)
-    this.notification = new LoginNotification(ctx, config.notification ?? {}, this.debug)
-    this.tokenManager = new TokenManager(ctx, config.token ?? {}, this.debug, this.extensions)
-    this.cleanup = new CleanupService(ctx, config.cleanup ?? {}, this.debug)
+    this.notification = new LoginNotification(ctx, config.notification, this.debug)
+    this.tokenManager = new TokenManager(ctx, config.token, this.debug, this.extensions)
+    this.cleanup = new CleanupService(ctx, config.cleanup, this.debug)
     this.loginHandler = new LoginHandler(
-      ctx, config.security ?? {}, this.tokenManager,
+      ctx, config.security, this.tokenManager,
       this.notification, this.debug, this.extensions,
       this.setAuth.bind(this),
     )
@@ -49,8 +51,6 @@ class AuthService extends Service {
       password: 'string(255)',
       config: { type: 'json', length: 65535, initial: null },
       lastLoginAt: 'timestamp',
-      failedAttempts: 'unsigned',
-      lockedUntil: 'timestamp',
       avatar: 'string(1024)',
       status: 'string(255)',
     })
@@ -86,6 +86,11 @@ class AuthService extends Service {
       success: 'boolean',
       createdAt: 'timestamp',
     }, { primary: 'inc', autoInc: true })
+
+    ctx.model.extend('auth_state', {
+      key: 'string(255)',
+      value: 'string(255)',
+    }, { primary: 'key' })
   }
 
   private registerEntry(ctx: Context) {
@@ -96,26 +101,60 @@ class AuthService extends Service {
   }
 
   async start() {
-    const { enabled, username, password } = this.config.admin ?? {}
-    if (!enabled) return
-    if (!username || !password) {
-      this.ctx.logger.warn('管理员账号创建已启用，但用户名或密码未配置，请检查插件设置')
-      return
-    }
-    this.ctx.logger.info('ensuring admin account')
-    await this.ctx.database.upsert('user', [{
-      id: 0,
-      name: username,
-      authority: 5,
-      password: hashPassword(password),
-      createdAt: new Date(),
-    }])
     this.cleanup.start()
+    await this.syncAdminAccount()
   }
 
-  async setAuth(client: Client, auth: Auth | null | undefined = client.auth, passive = false) {
+  private async syncAdminAccount() {
+    const { enabled, username, password } = this.config.admin
+    if (!enabled) return
+    if (!username || !password) {
+      this.ctx.logger.warn('better-auth: 已启用管理员账号，但未配置用户名或密码，请在插件配置页补全')
+      return
+    }
+    const policyError = checkPasswordPolicy(password, this.config.security)
+    if (policyError) this.ctx.logger.warn(`better-auth: 管理员密码不满足当前密码策略（${policyError}）`)
+
+    try {
+      const current = fingerprint(password)
+      const [admin] = await this.ctx.database.get('user', { id: ADMIN_USER_ID })
+      const [state] = await this.ctx.database.get('auth_state', { key: ADMIN_PASSWORD_STATE })
+
+      if (!admin) {
+        const [conflict] = await this.ctx.database.get('user', { name: username })
+        if (conflict) {
+          this.ctx.logger.error(`better-auth: 管理员账号创建失败，用户名 ${username} 已被占用，请更换管理员用户名或删除同名账号`)
+          return
+        }
+        await this.ctx.database.create('user', {
+          id: ADMIN_USER_ID,
+          name: username,
+          authority: ADMIN_AUTHORITY,
+          password: hashPassword(password),
+          createdAt: new Date(),
+        })
+        await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
+        this.ctx.logger.info(`better-auth: 管理员账号 ${username} 已创建`)
+        return
+      }
+
+      if (!state) {
+        await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
+        this.ctx.logger.info(`better-auth: 已记录管理员账号 ${admin.name} 的密码状态，后续仅在配置页修改密码时同步`)
+        return
+      }
+
+      if (state.value === current) return
+      await this.ctx.database.set('user', { id: ADMIN_USER_ID }, { password: hashPassword(password) })
+      await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
+      this.ctx.logger.info(`better-auth: 管理员账号 ${admin.name} 的密码已按配置更新`)
+    } catch (e: any) {
+      this.ctx.logger.error('better-auth: 同步管理员账号失败：' + (e?.message || e))
+    }
+  }
+
+  async setAuth(client: Client, auth: Auth | null) {
     client.auth = auth ?? undefined
-    if (passive) return
     if (auth) {
       const tokens = (await this.ctx.database.get('token', { id: auth.id }))
         .map(({ id, token, refreshToken, ...rest }) => rest)
@@ -149,11 +188,11 @@ class AuthService extends Service {
       if (client.auth.expiredAt <= Date.now()) return true
       if (client.auth.authority < listener.authority) return true
 
-      const idleTimeoutMs = (self.config.security?.idleTimeout ?? 1800) * 1000
+      const idleTimeoutMs = (self.config.security.idleTimeout ?? 1800) * 1000
       if (idleTimeoutMs > 0 && client.auth.lastUsedAt) {
         const last = new Date(client.auth.lastUsedAt).getTime()
         if (Date.now() - last > idleTimeoutMs) {
-          await self.setAuth(client, undefined)
+          await self.setAuth(client, null)
           return true
         }
       }
@@ -169,13 +208,13 @@ class AuthService extends Service {
 
     ctx.console.addListener('user/delete-token', async function (inc) {
       if (!this.auth) throw new Error('请先登录。')
-      const data = await self.tokenManager.revokeOne(inc)
+      const data = await self.tokenManager.revokeOne(inc, this.auth.id)
       if (!data) throw new Error('令牌不存在。')
       const [current] = await ctx.database.get('token', { token: this.auth.token })
       if (current && current.inc === inc) {
-        await self.setAuth(this, undefined)
+        await self.setAuth(this, null)
       } else {
-        await self.setAuth(this)
+        await self.setAuth(this, this.auth)
       }
     })
 
@@ -183,11 +222,12 @@ class AuthService extends Service {
       if (!this.auth) throw new Error('请先登录。')
       if (!incs?.length) return
       const [current] = await ctx.database.get('token', { token: this.auth.token })
-      await self.tokenManager.revokeBatch(incs)
+      const revoked = await self.tokenManager.revokeBatch(incs, this.auth.id)
+      if (!revoked) throw new Error('部分会话不存在或不属于当前账号。')
       if (current && incs.includes(current.inc)) {
-        await self.setAuth(this, undefined)
+        await self.setAuth(this, null)
       } else {
-        await self.setAuth(this)
+        await self.setAuth(this, this.auth)
       }
     })
 
@@ -199,44 +239,43 @@ class AuthService extends Service {
           await ctx.database.set('refresh_token', { token: current.refreshToken }, { revoked: true })
         }
       }
-      await self.setAuth(this, undefined)
+      await self.setAuth(this, null)
     })
 
     ctx.console.addListener('user/update', async function (data) {
       if (!this.auth) throw new Error('请先登录。')
-      if (data.name === '') delete data.name
-      if (data.password === '') delete data.password
-      if (data.name !== undefined && data.name !== this.auth.name) {
-        const [duplicate] = await ctx.database.get('user', { name: data.name })
-        if (duplicate && duplicate.id !== this.auth.id) throw new Error('用户名已被占用。')
-      }
-      if (data.password) data.password = hashPassword(data.password)
-      await ctx.database.set('user', { id: this.auth.id }, data)
-      const { password, ...safe } = data
-      Object.assign(this.auth, safe)
-      await self.setAuth(this, undefined, true)
-    })
+      const { name, password } = data
+      const patch: Record<string, any> = {}
 
-    ctx.console.addListener('config/better-auth/update', async function (data: Record<string, any>) {
-      if (!this.auth || this.auth.authority < 5) throw new Error('权限不足。')
-      const merged: Record<string, any> = {
-        admin: data.admin ?? {},
-        security: data.security ?? {},
-        token: data.token ?? {},
-        cleanup: data.cleanup ?? {},
-        notification: data.notification ?? {},
-        debug: data.debug ?? {},
+      if (name !== undefined) {
+        if (!name) throw new Error('用户名不能为空。')
+        if (name !== this.auth.name) {
+          const [duplicate] = await ctx.database.get('user', { name })
+          if (duplicate && duplicate.id !== this.auth.id) throw new Error('用户名已被占用。')
+        }
+        patch.name = name
       }
-      if (!merged.admin.password) delete merged.admin.password
-      const mergedConfig = migrateLegacyConfig(merged) as PluginConfig
-      self.config = mergedConfig
-      self.debug.update(mergedConfig.debug ?? {})
-      self.extensions = new ExtensionManager(self.debug)
-      self.notification.update(mergedConfig.notification ?? {})
-      self.tokenManager.update(mergedConfig.token ?? {})
-      self.cleanup.update(mergedConfig.cleanup ?? {})
-      self.loginHandler.update(mergedConfig.security ?? {})
-      return 'ok'
+
+      if (data.config !== undefined) patch.config = data.config
+      if (data.avatar !== undefined) patch.avatar = data.avatar
+
+      if (password !== undefined) {
+        if (!password) throw new Error('新密码不能为空，如需修改请填写新密码。')
+        const policyError = checkPasswordPolicy(password, self.config.security)
+        if (policyError) throw new Error(policyError + '。')
+        patch.password = hashPassword(password)
+      }
+
+      if (!Object.keys(patch).length) return
+      await ctx.database.set('user', { id: this.auth.id }, patch)
+
+      if (patch.name) this.auth.name = patch.name
+      if (patch.config !== undefined) this.auth.config = patch.config
+      if (patch.avatar !== undefined) this.auth.avatar = patch.avatar
+      if (patch.password && self.config.token.revokeOnPasswordChange) {
+        await self.tokenManager.revokeAll(this.auth.id, this.auth.token)
+      }
+      await self.setAuth(this, this.auth)
     })
   }
 }

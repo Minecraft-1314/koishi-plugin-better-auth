@@ -3,16 +3,15 @@
     "$description": "管理员设置",
     "enabled": "启用管理员账号创建",
     "username": "管理员用户名",
-    "password": "管理员密码"
+    "password": "管理员密码，留空表示不同步密码"
   },
   "security": {
     "$description": "安全设置",
     "maxLoginAttempts": "最大登录尝试次数，超出后将锁定账号",
     "lockTime": "登录锁定时间（秒），锁定期间拒绝登录请求",
     "idleTimeout": "空闲超时时间（秒），0 表示不限制，超时后自动退出登录",
-    "passwordMinLength": "密码最小长度",
-    "passwordRequireSpecialChar": "密码必须包含特殊字符",
-    "passwordHashAlgorithm": "密码哈希算法"
+    "passwordMinLength": "密码最小长度（修改密码时生效）",
+    "passwordRequireSpecialChar": "密码必须包含特殊字符（修改密码时生效）"
   },
   "token": {
     "$description": "令牌设置",
@@ -20,14 +19,12 @@
     "refreshExpire": "刷新令牌有效期（秒）",
     "rememberExpire": "记住我令牌有效期（秒）",
     "maxTokensPerUser": "每个用户最大令牌数，超出后自动移除最早的令牌",
-    "revokeOnPasswordChange": "修改密码时撤销所有令牌，强制重新登录"
+    "revokeOnPasswordChange": "修改密码时撤销该账号的其他登录会话"
   },
   "cleanup": {
     "$description": "数据清理",
     "enabled": "启用自动数据清理",
     "interval": "清理间隔（秒）",
-    "tokenRetention": "令牌保留时间（秒）",
-    "refreshTokenRetention": "刷新令牌保留时间（秒）",
     "attemptRetention": "登录尝试记录保留时间（秒）"
   },
   "notification": {

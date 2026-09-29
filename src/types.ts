@@ -10,8 +10,6 @@ declare module 'koishi' {
     password: string
     config: any
     lastLoginAt?: Date
-    failedAttempts?: number
-    lockedUntil?: Date
     avatar?: string
     status?: 'active' | 'disabled' | 'frozen'
   }
@@ -20,6 +18,7 @@ declare module 'koishi' {
     token: LoginToken
     refresh_token: RefreshToken
     login_attempt: LoginAttempt
+    auth_state: AuthState
   }
 }
 
@@ -44,8 +43,12 @@ declare module '@koishijs/console' {
     'user/update'(this: Client, data: UserUpdate): void
     'user/logout'(this: Client): void
     'user/heartbeat'(this: Client): void
-    'config/better-auth/update'(this: Client, data: any): void
   }
+}
+
+export interface AuthState {
+  key: string
+  value: string
 }
 
 export interface LoginToken {

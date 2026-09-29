@@ -40,8 +40,4 @@ export class DebugLogger {
     if (!this.isEnabled('logExtensions')) return
     console.log(`${this.prefix}[extension] ${message}`, ...args)
   }
-
-  update(newConfig: DebugConfig) {
-    this.config = newConfig
-  }
 }

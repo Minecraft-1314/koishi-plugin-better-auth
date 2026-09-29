@@ -18,7 +18,6 @@ export interface SecurityConfig {
     idleTimeout?: number;
     passwordMinLength?: number;
     passwordRequireSpecialChar?: boolean;
-    passwordHashAlgorithm?: 'sha256';
 }
 export interface TokenManagerConfig extends TokenConfig {
     maxTokensPerUser?: number;
@@ -32,11 +31,4 @@ export interface PluginConfig {
     notification: NotificationConfig;
     debug: DebugConfig;
 }
-export interface NotificationConfigCompat {
-    enabled?: boolean;
-    target?: string;
-    robotId?: string;
-    type?: string;
-}
-export declare function migrateLegacyConfig(raw: any): PluginConfig;
 export declare const PluginSchema: Schema<PluginConfig>;

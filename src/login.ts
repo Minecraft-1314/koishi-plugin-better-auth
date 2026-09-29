@@ -6,7 +6,7 @@ import { DebugLogger } from './debug'
 import { LoginNotification } from './notification'
 import { ExtensionManager } from './extension'
 
-type SetAuthFn = (client: any, auth: any, passive?: boolean) => Promise<void>
+type SetAuthFn = (client: any, auth: any) => Promise<void>
 
 export class LoginHandler {
   constructor(
@@ -18,10 +18,6 @@ export class LoginHandler {
     private extensions: ExtensionManager,
     private setAuth: SetAuthFn,
   ) {}
-
-  update(newConfig: SecurityConfig) {
-    this.config = newConfig
-  }
 
   async recordAttempt(username: string, address: string, fingerprint: string, success: boolean) {
     await this.ctx.database.create('login_attempt', {
@@ -78,6 +74,7 @@ export class LoginHandler {
 
     await this.ctx.database.remove('login_attempt', { username: name })
     await this.recordAttempt(name, address, deviceFingerprint, true)
+    await this.ctx.database.set('user', { id: user.id }, { lastLoginAt: new Date() })
 
     const authData = await this.tokenManager.create(client, 'password', {
       id: user.id,

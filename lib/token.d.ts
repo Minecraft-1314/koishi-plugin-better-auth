@@ -10,7 +10,6 @@ export declare class TokenManager {
     private debug;
     private extensions;
     constructor(ctx: Context, config: TokenManagerConfig, debug: DebugLogger, extensions: ExtensionManager);
-    update(newConfig: TokenManagerConfig): void;
     create(client: Client, type: LoginType, user: {
         id: number;
         name: string;
@@ -31,8 +30,8 @@ export declare class TokenManager {
         fingerprint: string | undefined;
     }>;
     enforceTokenLimit(userId: number): Promise<void>;
-    revokeAll(userId: number): Promise<void>;
-    revokeOne(inc: number): Promise<LoginToken | null>;
-    revokeBatch(incs: number[]): Promise<void>;
+    revokeAll(userId: number, exceptToken?: string): Promise<void>;
+    revokeOne(inc: number, userId?: number): Promise<LoginToken | null>;
+    revokeBatch(incs: number[], userId?: number): Promise<LoginToken[] | null>;
     updateLastUsed(token: string): Promise<Date>;
 }

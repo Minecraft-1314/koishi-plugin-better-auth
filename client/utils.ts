@@ -14,7 +14,6 @@ declare module '@koishijs/plugin-console' {
     'user/update'(this: Client, data: any): void
     'user/logout'(this: Client): void
     'user/heartbeat'(this: Client): void
-    'config/better-auth/update'(this: Client, data: any): void
   }
 
   namespace Console {

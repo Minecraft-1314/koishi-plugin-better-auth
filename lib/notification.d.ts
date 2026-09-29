@@ -14,7 +14,6 @@ export declare class LoginNotification {
     private config;
     private debug;
     constructor(ctx: Context, config: NotificationConfig, debug: DebugLogger);
-    update(newConfig: NotificationConfig): void;
     send(message: string): Promise<void>;
     notifyLogin(username: string, address: string, type: string): Promise<void>;
     notifyLoginFail(username: string, address: string, reason: string): Promise<void>;

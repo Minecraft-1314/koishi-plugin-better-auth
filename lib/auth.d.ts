@@ -22,7 +22,8 @@ declare class AuthService extends Service {
     private registerModels;
     private registerEntry;
     start(): Promise<void>;
-    setAuth(client: Client, auth?: Auth | null | undefined, passive?: boolean): Promise<void>;
+    private syncAdminAccount;
+    setAuth(client: Client, auth: Auth | null): Promise<void>;
     private registerListeners;
 }
 declare namespace AuthService {
