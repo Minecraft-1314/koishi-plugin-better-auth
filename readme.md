@@ -16,12 +16,11 @@ This is a **console user authentication plugin** developed for the Koishi bot fr
 
 ## 配置项说明 (Configuration)
 
-所有配置项均在 Koishi 控制台的**插件配置页**中修改（本插件不再提供独立的用户设置页面）。
+所有配置项均在 Koishi 控制台的**插件配置页**中修改。
 配置由控制台按 Schema 校验后写回 `koishi.yml`，保存时本插件会被重新加载，配置立即生效，无需重启机器人。
 
-All settings are edited on the **plugin configuration page** of the Koishi console
-(this plugin no longer ships a separate user settings page). Values are validated against
-the schema, written back to `koishi.yml`, and applied by reloading the plugin.
+All settings are edited on the **plugin configuration page** of the Koishi console. 
+Values are validated against the schema, written back to `koishi.yml`, and applied by reloading the plugin.
 
 ### 管理员设置 (`admin`)
 | 配置项 (Config) | 类型 (Type) | 默认值 (Default) | 说明 (Description) |
@@ -77,26 +76,6 @@ the schema, written back to `koishi.yml`, and applied by reloading the plugin.
 | `logNotifications` | boolean | false | 记录提醒发送 (Notifications) |
 | `logCleanup` | boolean | false | 记录清理任务 (Cleanup tasks) |
 | `logExtensions` | boolean | false | 记录扩展钩子 (Extension hooks) |
-
-### 从旧版本迁移 (Migration from legacy config)
-
-0.0.9 及更早版本使用扁平配置项，且其中多项从未真正生效。若 `koishi.yml` 中仍留有旧字段，
-在插件配置页重新填写一次即可，保存后旧字段会被自动清理。
-
-| 旧配置项 (Legacy) | 新配置项 (Current) |
-|--------------------|--------------------|
-| `adminEnabled` / `adminUsername` / `adminPassword` | `admin.enabled` / `admin.username` / `admin.password` |
-| `authTokenExpire` / `refreshTokenExpire` / `rememberTokenExpire` | `token.authExpire` / `token.refreshExpire` / `token.rememberExpire` |
-| `loginLockTime` | `security.lockTime` |
-| `idleTimeout` / `maxLoginAttempts` | `security.idleTimeout` / `security.maxLoginAttempts` |
-| `cleanupEnabled` / `cleanupInterval` / `attemptRetention` | `cleanup.enabled` / `cleanup.interval` / `cleanup.attemptRetention` |
-| `loginNotify.*` | `notification.*` |
-| `debugEnabled` / `logTokenOps` / ... | `debug.enabled` / `debug.logTokenOps` / ... |
-
-已移除的无效配置项：`passwordHashAlgorithm`（哈希算法固定为 sha256）、
-`cleanup.tokenRetention` 与 `cleanup.refreshTokenRetention`
-（过期令牌与刷新令牌按 `cleanup.interval` 直接删除，不做延迟保留）。
-
 
 ## 参考项目 (References)
 
