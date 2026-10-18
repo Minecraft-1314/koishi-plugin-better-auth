@@ -1,6 +1,9 @@
 import { Context } from 'koishi'
 import { DebugLogger } from './debug'
 
+export const DEFAULT_LOGIN_NOTIFY_MESSAGE = '用户 {username} 于 {time} {type}控制台，IP: {address}'
+export const DEFAULT_FAIL_NOTIFY_MESSAGE = '用户 {username} 于 {time} 登录失败，原因: {reason}，IP: {address}'
+
 export interface NotificationConfig {
   enabled?: boolean
   target?: string
@@ -48,7 +51,7 @@ export class LoginNotification {
 
   async notifyLogin(username: string, address: string, type: string) {
     if (!this.config.loginSuccess) return
-    const tpl = this.config.loginNotifyMessage || '用户 {username} 于 {time} {type}控制台，IP: {address}'
+    const tpl = this.config.loginNotifyMessage || DEFAULT_LOGIN_NOTIFY_MESSAGE
     const message = tpl
       .replace('{username}', username)
       .replace('{time}', new Date().toLocaleString())
@@ -59,7 +62,7 @@ export class LoginNotification {
 
   async notifyLoginFail(username: string, address: string, reason: string) {
     if (!this.config.loginFail) return
-    const tpl = this.config.failNotifyMessage || '用户 {username} 于 {time} 登录失败，原因: {reason}，IP: {address}'
+    const tpl = this.config.failNotifyMessage || DEFAULT_FAIL_NOTIFY_MESSAGE
     const message = tpl
       .replace('{username}', username)
       .replace('{time}', new Date().toLocaleString())

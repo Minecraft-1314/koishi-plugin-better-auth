@@ -1,6 +1,6 @@
 import { Schema } from 'koishi'
 import { CleanupConfig } from './cleanup'
-import { NotificationConfig } from './notification'
+import { DEFAULT_FAIL_NOTIFY_MESSAGE, DEFAULT_LOGIN_NOTIFY_MESSAGE, NotificationConfig } from './notification'
 import { DebugConfig } from './debug'
 
 export interface AdminConfig {
@@ -37,10 +37,13 @@ export interface PluginConfig {
   debug: DebugConfig
 }
 
+export const DEFAULT_ADMIN_USERNAME = 'root'
+export const DEFAULT_ADMIN_PASSWORD = '123456'
+
 const AdminSchema = Schema.object({
   enabled: Schema.boolean().default(true).description('启用管理员账号创建'),
-  username: Schema.string().default('admin').description('管理员用户名'),
-  password: Schema.string().role('secret').default('').description('管理员密码，留空表示不同步密码'),
+  username: Schema.string().default(DEFAULT_ADMIN_USERNAME).description('管理员用户名'),
+  password: Schema.string().role('secret').default(DEFAULT_ADMIN_PASSWORD).description('管理员密码，留空表示不同步密码'),
 }).description('管理员设置')
 
 const SecuritySchema = Schema.object({
@@ -71,17 +74,12 @@ const NotificationSchema = Schema.object({
   robotId: Schema.string().default('').description('指定机器人账号（留空使用第一个）'),
   loginSuccess: Schema.boolean().default(true).description('登录成功时发送提醒'),
   loginFail: Schema.boolean().default(false).description('登录失败时发送提醒'),
-  loginNotifyMessage: Schema.string().default('').description('登录成功提醒模板（留空使用默认）'),
-  failNotifyMessage: Schema.string().default('').description('登录失败提醒模板（留空使用默认）'),
+  loginNotifyMessage: Schema.string().default(DEFAULT_LOGIN_NOTIFY_MESSAGE).description('登录成功提醒模板，支持 {username} {time} {type} {address} 占位符'),
+  failNotifyMessage: Schema.string().default(DEFAULT_FAIL_NOTIFY_MESSAGE).description('登录失败提醒模板，支持 {username} {time} {reason} {address} 占位符'),
 }).description('登录提醒')
 
 const DebugSchema = Schema.object({
-  enabled: Schema.boolean().default(false).description('启用调试日志（仅输出到日志，不影响前端）'),
-  logTokenOps: Schema.boolean().default(false).description('记录令牌操作日志'),
-  logLoginAttempts: Schema.boolean().default(false).description('记录登录尝试日志'),
-  logNotifications: Schema.boolean().default(false).description('记录通知发送日志'),
-  logCleanup: Schema.boolean().default(false).description('记录数据清理日志'),
-  logExtensions: Schema.boolean().default(false).description('记录扩展钩子日志'),
+  enabled: Schema.boolean().default(false).description('启用调试日志'),
 }).description('调试设置')
 
 export const PluginSchema: Schema<PluginConfig> = Schema.object({

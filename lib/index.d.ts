@@ -1,5 +1,6 @@
 export { default, default as AuthService } from './auth';
 export type { PluginConfig, AdminConfig, SecurityConfig, TokenManagerConfig } from './config';
+export { DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD } from './config';
 export type { CleanupConfig } from './cleanup';
 export type { NotificationConfig } from './notification';
 export type { DebugConfig } from './debug';

@@ -31,4 +31,6 @@ export interface PluginConfig {
     notification: NotificationConfig;
     debug: DebugConfig;
 }
+export declare const DEFAULT_ADMIN_USERNAME = "root";
+export declare const DEFAULT_ADMIN_PASSWORD = "123456";
 export declare const PluginSchema: Schema<PluginConfig>;

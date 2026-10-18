@@ -23,6 +23,7 @@ declare class AuthService extends Service {
     private registerEntry;
     start(): Promise<void>;
     private syncAdminAccount;
+    private recordAdminState;
     setAuth(client: Client, auth: Auth | null): Promise<void>;
     private registerListeners;
 }

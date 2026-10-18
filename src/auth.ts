@@ -1,7 +1,7 @@
 import { Context, Schema, Service } from 'koishi'
 import { Client } from '@koishijs/console'
-import { PluginConfig, PluginSchema } from './config'
-import { checkPasswordPolicy, fingerprint, hashPassword } from './password'
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME, PluginConfig, PluginSchema } from './config'
+import { checkPasswordPolicy, fingerprint, hashPassword, verifyPassword } from './password'
 import { TokenManager } from './token'
 import { LoginHandler } from './login'
 import { CleanupService } from './cleanup'
@@ -13,6 +13,7 @@ import { resolve } from 'path'
 
 const ADMIN_USER_ID = 0
 const ADMIN_AUTHORITY = 5
+const ADMIN_NAME_STATE = 'admin-name'
 const ADMIN_PASSWORD_STATE = 'admin-password'
 
 class AuthService extends Service {
@@ -108,19 +109,37 @@ class AuthService extends Service {
   private async syncAdminAccount() {
     const { enabled, username, password } = this.config.admin
     if (!enabled) return
-    if (!username || !password) {
-      this.ctx.logger.warn('better-auth: 已启用管理员账号，但未配置用户名或密码，请在插件配置页补全')
+    if (!username) {
+      this.ctx.logger.warn('better-auth: 已启用管理员账号同步，但未配置用户名，请在插件配置页补全')
       return
     }
-    const policyError = checkPasswordPolicy(password, this.config.security)
-    if (policyError) this.ctx.logger.warn(`better-auth: 管理员密码不满足当前密码策略（${policyError}）`)
+    if (password) {
+      const policyError = checkPasswordPolicy(password, this.config.security)
+      if (policyError) this.ctx.logger.warn(`better-auth: 管理员密码不满足当前密码策略（${policyError}）`)
+    }
 
     try {
-      const current = fingerprint(password)
+      const [storedName] = await this.ctx.database.get('auth_state', { key: ADMIN_NAME_STATE })
+      const [storedPassword] = await this.ctx.database.get('auth_state', { key: ADMIN_PASSWORD_STATE })
       const [admin] = await this.ctx.database.get('user', { id: ADMIN_USER_ID })
-      const [state] = await this.ctx.database.get('auth_state', { key: ADMIN_PASSWORD_STATE })
+
+      const isDefaultCredentials = username === DEFAULT_ADMIN_USERNAME
+        && password === DEFAULT_ADMIN_PASSWORD
+      const hasBaseline = !!storedName || !!storedPassword
+      const keepExisting = !!admin && !hasBaseline && isDefaultCredentials
+
+      const nameChanged = !keepExisting && storedName?.value !== username
+      const passwordChanged = !keepExisting && !!password
+        && storedPassword?.value !== fingerprint(password)
+      const passwordHash = passwordChanged && !verifyPassword(password, admin?.password)
+        ? hashPassword(password)
+        : undefined
 
       if (!admin) {
+        if (!password) {
+          this.ctx.logger.warn('better-auth: 管理员账号不存在，且未配置密码，请在插件配置页填写管理员密码')
+          return
+        }
         const [conflict] = await this.ctx.database.get('user', { name: username })
         if (conflict) {
           this.ctx.logger.error(`better-auth: 管理员账号创建失败，用户名 ${username} 已被占用，请更换管理员用户名或删除同名账号`)
@@ -133,24 +152,42 @@ class AuthService extends Service {
           password: hashPassword(password),
           createdAt: new Date(),
         })
-        await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
+        await this.recordAdminState(true, username, true, password)
         this.ctx.logger.info(`better-auth: 管理员账号 ${username} 已创建`)
+        if (password === DEFAULT_ADMIN_PASSWORD) {
+          this.ctx.logger.warn('better-auth: 当前使用默认密码 123456，公网部署前请在控制台个人资料页修改')
+        }
         return
       }
 
-      if (!state) {
-        await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
-        this.ctx.logger.info(`better-auth: 已记录管理员账号 ${admin.name} 的密码状态，后续仅在配置页修改密码时同步`)
-        return
+      let nameSynced = !nameChanged || admin.name === username
+      if (!nameSynced) {
+        const [conflict] = await this.ctx.database.get('user', { name: username })
+        if (conflict && conflict.id !== ADMIN_USER_ID) {
+          this.ctx.logger.error(`better-auth: 管理员用户名同步失败，${username} 已被其他账号占用，请更换管理员用户名`)
+        } else {
+          await this.ctx.database.set('user', { id: ADMIN_USER_ID }, { name: username })
+          nameSynced = true
+          this.ctx.logger.info(`better-auth: 管理员账号已重命名为 ${username}`)
+        }
       }
 
-      if (state.value === current) return
-      await this.ctx.database.set('user', { id: ADMIN_USER_ID }, { password: hashPassword(password) })
-      await this.ctx.database.upsert('auth_state', [{ key: ADMIN_PASSWORD_STATE, value: current }])
-      this.ctx.logger.info(`better-auth: 管理员账号 ${admin.name} 的密码已按配置更新`)
+      if (passwordHash) {
+        await this.ctx.database.set('user', { id: ADMIN_USER_ID }, { password: passwordHash })
+        this.ctx.logger.info(`better-auth: 管理员账号 ${admin.name} 的密码已按配置更新`)
+      }
+
+      await this.recordAdminState(nameChanged && nameSynced, username, passwordChanged, password)
     } catch (e: any) {
       this.ctx.logger.error('better-auth: 同步管理员账号失败：' + (e?.message || e))
     }
+  }
+
+  private async recordAdminState(nameChanged: boolean, username: string, passwordChanged: boolean, password?: string) {
+    const rows: { key: string, value: string }[] = []
+    if (nameChanged) rows.push({ key: ADMIN_NAME_STATE, value: username })
+    if (passwordChanged && password) rows.push({ key: ADMIN_PASSWORD_STATE, value: fingerprint(password) })
+    if (rows.length) await this.ctx.database.upsert('auth_state', rows)
   }
 
   async setAuth(client: Client, auth: Auth | null) {

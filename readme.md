@@ -26,8 +26,10 @@ Values are validated against the schema, written back to `koishi.yml`, and appli
 | 配置项 (Config) | 类型 (Type) | 默认值 (Default) | 说明 (Description) |
 |----------------|-------------|-------------------|---------------------|
 | `enabled` | boolean | true | 启用管理员账号创建 (Enable admin account bootstrap) |
-| `username` | string | admin | 管理员用户名，仅在账号不存在时用于创建 (Username, used only when the account is missing) |
-| `password` | string | 空 | 管理员密码，留空表示不修改；仅在该值变化时写入数据库，用户自行修改的密码不会被配置保存覆盖 |
+| `username` | string | root | 管理员用户名；账号不存在时用于创建，已存在时在配置值变化后自动重命名 (Username; used to create the account, and renames the existing one once the configured value changes) |
+| `password` | string | 123456 | 管理员密码，留空表示不修改；仅在该值变化时写入数据库，在控制台个人资料页自行修改的密码不会被启动同步覆盖 |
+
+未配置任何管理员相关项时，首次启动会自动创建用户名 `root`、密码 `123456` 的管理员账号。该默认密码为公开值，部署到公网前请务必在控制台修改
 
 ### 安全设置 (`security`)
 | 配置项 (Config) | 类型 (Type) | 默认值 (Default) | 说明 (Description) |
@@ -62,20 +64,15 @@ Values are validated against the schema, written back to `koishi.yml`, and appli
 | `robotId` | string | 空 | 指定机器人账号，留空自动使用第一个机器人 (Bot self ID, first available when empty) |
 | `loginSuccess` | boolean | true | 登录成功时发送提醒 (Notify on success) |
 | `loginFail` | boolean | false | 登录失败时发送提醒 (Notify on failure) |
-| `loginNotifyMessage` | string | 空 | 登录成功提醒模板，留空使用默认 (Success template) |
-| `failNotifyMessage` | string | 空 | 登录失败提醒模板，留空使用默认 (Failure template) |
+| `loginNotifyMessage` | string | 用户 {username} 于 {time} {type}控制台，IP: {address} | 登录成功提醒模板 (Success template) |
+| `failNotifyMessage` | string | 用户 {username} 于 {time} 登录失败，原因: {reason}，IP: {address} | 登录失败提醒模板 (Failure template) |
 
-提醒模板支持 `{username}`、`{time}`、`{type}`、`{address}`、`{reason}` 占位符。
+提醒模板支持 `{username}`、`{time}`、`{type}`、`{address}`、`{reason}` 占位符，默认模板会直接显示在配置页中，可直接编辑
 
 ### 调试设置 (`debug`)
 | 配置项 (Config) | 类型 (Type) | 默认值 (Default) | 说明 (Description) |
 |----------------|-------------|-------------------|---------------------|
-| `enabled` | boolean | false | 调试日志总开关 (Master switch for debug logs) |
-| `logTokenOps` | boolean | false | 记录令牌操作 (Token operations) |
-| `logLoginAttempts` | boolean | false | 记录登录尝试 (Login attempts) |
-| `logNotifications` | boolean | false | 记录提醒发送 (Notifications) |
-| `logCleanup` | boolean | false | 记录清理任务 (Cleanup tasks) |
-| `logExtensions` | boolean | false | 记录扩展钩子 (Extension hooks) |
+| `enabled` | boolean | false | 启用调试日志 (Enable debug logs) |
 
 ## 参考项目 (References)
 
@@ -88,7 +85,7 @@ Values are validated against the schema, written back to `koishi.yml`, and appli
 | 贡献者 (Contributor) | 贡献内容 (Contribution) |
 |----------------------|-------------------------|
 | Minecraft-1314 | 插件深度定制与功能扩展 |
-
+| ERANRT | 提交Bug-在Web UI更改账号名称和密码时不生效+Koishi.yml文件中更改账号名或密码重启Koishi后仍不生效-已修复 |
 （欢迎通过 Issues 或 PR 加入贡献者列表）
 
 ## 许可协议 (License)

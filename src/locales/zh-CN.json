@@ -2,8 +2,8 @@
   "admin": {
     "$description": "管理员设置",
     "enabled": "启用管理员账号创建",
-    "username": "管理员用户名",
-    "password": "管理员密码，留空表示不同步密码"
+    "username": "管理员用户名，默认 root",
+    "password": "管理员密码，默认 123456，留空表示不同步密码"
   },
   "security": {
     "$description": "安全设置",
@@ -34,16 +34,11 @@
     "robotId": "指定机器人账号（留空使用第一个）",
     "loginSuccess": "登录成功时发送提醒",
     "loginFail": "登录失败时发送提醒",
-    "loginNotifyMessage": "登录成功提醒模板（留空使用默认）",
-    "failNotifyMessage": "登录失败提醒模板（留空使用默认）"
+    "loginNotifyMessage": "登录成功提醒模板，支持 {username} {time} {type} {address} 占位符",
+    "failNotifyMessage": "登录失败提醒模板，支持 {username} {time} {reason} {address} 占位符"
   },
   "debug": {
     "$description": "调试设置",
-    "enabled": "启用调试日志（仅输出到后端日志，不影响前端）",
-    "logTokenOps": "记录令牌操作日志",
-    "logLoginAttempts": "记录登录尝试日志",
-    "logNotifications": "记录通知发送日志",
-    "logCleanup": "记录数据清理日志",
-    "logExtensions": "记录扩展钩子日志"
+    "enabled": "启用调试日志"
   }
 }

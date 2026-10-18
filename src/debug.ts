@@ -1,10 +1,5 @@
 export interface DebugConfig {
   enabled?: boolean
-  logTokenOps?: boolean
-  logLoginAttempts?: boolean
-  logNotifications?: boolean
-  logCleanup?: boolean
-  logExtensions?: boolean
 }
 
 export class DebugLogger {
@@ -12,32 +7,32 @@ export class DebugLogger {
 
   constructor(private config: DebugConfig) {}
 
-  private isEnabled(category: keyof Omit<DebugConfig, 'enabled'>) {
-    return this.config.enabled && this.config[category]
+  private get isEnabled() {
+    return !!this.config.enabled
   }
 
   token(message: string, ...args: any[]) {
-    if (!this.isEnabled('logTokenOps')) return
+    if (!this.isEnabled) return
     console.log(`${this.prefix}[token] ${message}`, ...args)
   }
 
   login(message: string, ...args: any[]) {
-    if (!this.isEnabled('logLoginAttempts')) return
+    if (!this.isEnabled) return
     console.log(`${this.prefix}[login] ${message}`, ...args)
   }
 
   notify(message: string, ...args: any[]) {
-    if (!this.isEnabled('logNotifications')) return
+    if (!this.isEnabled) return
     console.log(`${this.prefix}[notify] ${message}`, ...args)
   }
 
   cleanup(message: string, ...args: any[]) {
-    if (!this.isEnabled('logCleanup')) return
+    if (!this.isEnabled) return
     console.log(`${this.prefix}[cleanup] ${message}`, ...args)
   }
 
   extension(message: string, ...args: any[]) {
-    if (!this.isEnabled('logExtensions')) return
+    if (!this.isEnabled) return
     console.log(`${this.prefix}[extension] ${message}`, ...args)
   }
 }
